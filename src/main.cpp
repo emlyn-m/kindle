@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "widgets.hpp"
+#include "widgets/widgets.hpp"
 
 #define CELL_ROWCOUNT 5
 #define CELL_COLCOUNT 5

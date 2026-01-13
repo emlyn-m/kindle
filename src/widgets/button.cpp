@@ -1,8 +1,9 @@
 #include "./widgets.hpp"
 #include "glib-object.h"
 #include "gtk/gtk.h"
+#include "../screens/screens.hpp"
 
-GtkWidget* button_widget(char* label_content, void (*callback)(void*), void* data) {
+GtkWidget* button_widget(char* label_content, void (*callback)(GtkButton*, GdkEvent*, void*), void* data) {
 	GtkWidget* wrapper = gtk_vbox_new(FALSE, 0);
 	
 	GtkWidget* ev_box = gtk_event_box_new();

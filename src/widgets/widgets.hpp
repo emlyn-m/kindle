@@ -117,7 +117,7 @@ typedef struct TaskData {
 
 GtkWidget* time_widget();
 GtkWidget* telem_widget(double update_freq_ms);
-GtkWidget* button_widget(char* label_content, void (*callback)(void*), void* data);
+GtkWidget* button_widget(char* label_content, void (*callback)(GtkButton*, GdkEvent*, void*), void* data);
 GtkWidget* weather_widget();
 GtkWidget* calendar_widget();
 GtkWidget* alerts_widget();

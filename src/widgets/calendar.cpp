@@ -29,14 +29,15 @@ gboolean title_update(gpointer* data_p) {
 	} else {
 		if (data->title_date_widget == NULL) {
 			PangoFontDescription* font_desc_date = pango_font_description_from_string(FONT_BOLD_20);
-			gtk_object_unref(GTK_OBJECT(data->title_date_widget));
 			data->title_date_widget = gtk_label_new("date");
 			gtk_widget_modify_font(data->title_date_widget, font_desc_date);
 			gtk_misc_set_alignment (GTK_MISC(data->title_date_widget), 0.0, 0.0);
 			
 			pango_font_description_free(font_desc_date);
 			gtk_box_pack_start(GTK_BOX(data->title_widget), data->title_date_widget, FALSE, FALSE, 0);
+			gtk_widget_show(data->title_date_widget);
 		}
+				
 		snprintf(message_buf, 64, "%d %s", tm_struct.tm_mday, MONTHS[tm_struct.tm_mon]);
 		gtk_label_set_text(GTK_LABEL(data->title_day_widget), DAYS[tm_struct.tm_wday]);
 		gtk_label_set_text(GTK_LABEL(data->title_date_widget), message_buf);
@@ -159,10 +160,10 @@ GtkWidget* calendar_widget() {
 	PangoFontDescription* font_desc_day = pango_font_description_from_string(FONT_BOLD_12);
 
 	calendar_data->title_day_widget = gtk_label_new("day");
-	calendar_data->title_date_widget = gtk_label_new("date");
+	calendar_data->title_date_widget = NULL;
 	gtk_widget_modify_font(calendar_data->title_day_widget, font_desc_day);
 	gtk_misc_set_alignment (GTK_MISC(calendar_data->title_day_widget), 0.0, 0.0);
-
+	
 	pango_font_description_free(font_desc_day);
 	gtk_box_pack_start(GTK_BOX(calendar_data->title_widget), calendar_data->title_day_widget, FALSE, FALSE, 0);
 

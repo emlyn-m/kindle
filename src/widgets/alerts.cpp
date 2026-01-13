@@ -38,7 +38,6 @@ GtkWidget* alerts_widget() {
 	alert_data->alert_widgets = (GtkWidget**) malloc(alert_data->num_alerts * sizeof(GtkWidget*));
 	alert_data->alert_meta_widgets = (GtkWidget**) malloc(alert_data->num_alerts * sizeof(GtkWidget*));
 	
-	// wrapper
 	GtkWidget* wrapper = gtk_vbox_new(FALSE, 0);
 	
 	// alerts title

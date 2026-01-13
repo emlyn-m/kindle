@@ -19,16 +19,17 @@ gboolean title_update(gpointer* data_p) {
     std::tm tm_struct = *std::localtime(&t);
     
     char* message_buf = (char*) malloc(64 * sizeof(char));
-	if (data->active_event) {
+	if (data->active_event != NULL) {
 		snprintf(message_buf, 64, "%s, %s %d", DAYS[tm_struct.tm_wday], MONTHS[tm_struct.tm_mon], tm_struct.tm_mday);
 		gtk_label_set_text(GTK_LABEL(data->title_day_widget), message_buf);
-		if (data->title_date_widget) {
+		if (data->title_date_widget != NULL) {
 			gtk_container_remove(GTK_CONTAINER(data->title_widget), data->title_date_widget);
 			data->title_date_widget = NULL;
 		}
 	} else {
-		if (!data->title_date_widget) {
+		if (data->title_date_widget == NULL) {
 			PangoFontDescription* font_desc_date = pango_font_description_from_string(FONT_BOLD_20);
+			gtk_object_unref(GTK_OBJECT(data->title_date_widget));
 			data->title_date_widget = gtk_label_new("date");
 			gtk_widget_modify_font(data->title_date_widget, font_desc_date);
 			gtk_misc_set_alignment (GTK_MISC(data->title_date_widget), 0.0, 0.0);
@@ -140,48 +141,15 @@ GtkWidget* calendar_widget() {
 	calendar_t* calendar_data = (calendar_t*) malloc(sizeof(calendar_t));
 	calendar_data->show_events = 4;
 	calendar_data->num_events = 8;
-	calendar_data->events = (cal_event_t**) malloc(calendar_data->num_events * sizeof(cal_event_t*));;
-	calendar_data->events[0] = (cal_event_t*) malloc(sizeof(cal_event_t));
-	calendar_data->events[1] = (cal_event_t*) malloc(sizeof(cal_event_t));
-	calendar_data->events[2] = (cal_event_t*) malloc(sizeof(cal_event_t));
-	calendar_data->events[3] = (cal_event_t*) malloc(sizeof(cal_event_t));
-	calendar_data->events[4] = (cal_event_t*) malloc(sizeof(cal_event_t));
-	calendar_data->events[5] = (cal_event_t*) malloc(sizeof(cal_event_t));
-	calendar_data->events[6] = (cal_event_t*) malloc(sizeof(cal_event_t));
-	calendar_data->events[7] = (cal_event_t*) malloc(sizeof(cal_event_t));
-	calendar_data->events[0]->id = 0;
-	calendar_data->events[1]->id = 1;
-	calendar_data->events[2]->id = 2;
-	calendar_data->events[3]->id = 3;
-	calendar_data->events[4]->id = 4;
-	calendar_data->events[5]->id = 5;
-	calendar_data->events[6]->id = 6;
-	calendar_data->events[7]->id = 7;
-	calendar_data->events[0]->start_time = 0;
-	calendar_data->events[1]->start_time = 0;
-	calendar_data->events[2]->start_time = 0;
-	calendar_data->events[3]->start_time = 0;
-	calendar_data->events[4]->start_time = 0;
-	calendar_data->events[5]->start_time = 0;
-	calendar_data->events[6]->start_time = 0;
-	calendar_data->events[7]->start_time = 0;
-	calendar_data->events[0]->end_time = 0;
-	calendar_data->events[1]->end_time = 0;
-	calendar_data->events[2]->end_time = 0;
-	calendar_data->events[3]->end_time = 0;
-	calendar_data->events[4]->end_time = 0;
-	calendar_data->events[5]->end_time = 0;
-	calendar_data->events[6]->end_time = 0;
-	calendar_data->events[7]->end_time = 0;
-	calendar_data->events[0]->title = (char*) "ev0";
-	calendar_data->events[1]->title = (char*) "ev1";
-	calendar_data->events[2]->title = (char*) "ev2";
-	calendar_data->events[3]->title = (char*) "ev3";
-	calendar_data->events[4]->title = (char*) "ev4";
-	calendar_data->events[5]->title = (char*) "ev5";
-	calendar_data->events[6]->title = (char*) "ev6";
-	calendar_data->events[7]->title = (char*) "ev7";
-	calendar_data->active_event = calendar_data->events[4];
+	calendar_data->events = (cal_event_t**) malloc(calendar_data->num_events * sizeof(cal_event_t*));
+	for (guint i=0; i < calendar_data->num_events; i++) {
+	    (calendar_data->events)[i] = (cal_event_t*) malloc(sizeof(cal_event_t));
+		(calendar_data->events)[i]->id = i;
+		(calendar_data->events)[i]->start_time = 2000 * i;
+		(calendar_data->events)[i]->end_time = calendar_data->events[i]->start_time + 1000;
+		(calendar_data->events)[i]->title = (char*) "test";
+		calendar_data->active_event = calendar_data->events[4];
+	}
 		
 	// wrapper
 	GtkWidget* wrapper = gtk_vbox_new(FALSE, 30*SCALE);
@@ -191,6 +159,7 @@ GtkWidget* calendar_widget() {
 	PangoFontDescription* font_desc_day = pango_font_description_from_string(FONT_BOLD_12);
 
 	calendar_data->title_day_widget = gtk_label_new("day");
+	calendar_data->title_date_widget = gtk_label_new("date");
 	gtk_widget_modify_font(calendar_data->title_day_widget, font_desc_day);
 	gtk_misc_set_alignment (GTK_MISC(calendar_data->title_day_widget), 0.0, 0.0);
 
@@ -247,7 +216,6 @@ GtkWidget* calendar_widget() {
 	pango_font_description_free(font_desc_event);
 	pango_font_description_free(font_desc_event_active);
 
-		
 	g_timeout_add(1000, (GSourceFunc) title_update,          calendar_data);
 	g_timeout_add(1000, (GSourceFunc) active_event_update,   calendar_data);
 	g_timeout_add(1000, (GSourceFunc) pending_events_update, calendar_data);

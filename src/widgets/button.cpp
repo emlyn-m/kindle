@@ -1,7 +1,6 @@
 #include "./widgets.hpp"
 #include "glib-object.h"
 #include "gtk/gtk.h"
-#include "../screens/screens.hpp"
 
 GtkWidget* button_widget(char* label_content, void (*callback)(GtkButton*, GdkEvent*, void*), void* data) {
 	GtkWidget* wrapper = gtk_vbox_new(FALSE, 0);

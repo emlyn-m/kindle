@@ -113,6 +113,13 @@ typedef struct TaskData {
 	GtkWidget** task_checkboxes;
 	GtkWidget** task_widgets;
 } task_t;
+typedef struct {
+    GtkWidget *drawing_area;
+    float value;      // 0.0 to 1.0
+    gboolean dragging;
+    void (*callback_change)(float);
+    void (*callback_release)(float);
+} KindleSlider;
 
 
 GtkWidget* time_widget();
@@ -122,3 +129,5 @@ GtkWidget* weather_widget();
 GtkWidget* calendar_widget();
 GtkWidget* alerts_widget();
 GtkWidget* tasks_widget();
+GtkWidget* label_widget(char* label_content);
+KindleSlider* kindle_slider_new(void (*callback_change)(float), void (*callback_release)(float));

@@ -1,13 +1,13 @@
 #include "./widgets.hpp"
+#include "../net/net.hpp"
 #include "gtk/gtk.h"
+#include <algorithm>
 #include <gtk-2.0/gtk/gtk.h>
 
 #include <chrono>
 #include "pango/pango-font.h"
 #include <cstdlib>
 #include <cstring>
-
-
 
 gboolean title_update(gpointer* data_p) { 
 	const char* DAYS[] = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
@@ -106,7 +106,7 @@ gboolean pending_events_update(gpointer* data_p) {
 	PangoFontDescription* font_desc_event_active = pango_font_description_from_string(FONT_BOLD_12);
     
    	char* time_buf = (char*) malloc(128 * sizeof(char));
-	for (uint32_t i=0; i < data->show_events; i++) {
+	for (uint32_t i=0; i < std::min(data->show_events, data->num_events); i++) {
 		
 		cal_event_t* event = (data->events)[i+show_offset];
   		std::tm tm_start = *std::localtime((time_t*) &(event->start_time));
@@ -140,17 +140,10 @@ gboolean pending_events_update(gpointer* data_p) {
 GtkWidget* calendar_widget() {
 	
 	calendar_t* calendar_data = (calendar_t*) malloc(sizeof(calendar_t));
-	calendar_data->show_events = 4;
-	calendar_data->num_events = 8;
-	calendar_data->events = (cal_event_t**) malloc(calendar_data->num_events * sizeof(cal_event_t*));
-	for (guint i=0; i < calendar_data->num_events; i++) {
-	    (calendar_data->events)[i] = (cal_event_t*) malloc(sizeof(cal_event_t));
-		(calendar_data->events)[i]->id = i;
-		(calendar_data->events)[i]->start_time = 2000 * i;
-		(calendar_data->events)[i]->end_time = calendar_data->events[i]->start_time + 1000;
-		(calendar_data->events)[i]->title = (char*) "test";
-		calendar_data->active_event = calendar_data->events[4];
-	}
+	calendar_data->show_events = SHOW_CAL_EVENTS;
+	calendar_data->num_events = 0;
+	calendar_data->events = (cal_event_t**) malloc(MAX_CAL_EVENTS * sizeof(cal_event_t*));
+	calendar_data->active_event = NULL;
 		
 	// wrapper
 	GtkWidget* wrapper = gtk_vbox_new(FALSE, 30*SCALE);
@@ -217,6 +210,7 @@ GtkWidget* calendar_widget() {
 	pango_font_description_free(font_desc_event);
 	pango_font_description_free(font_desc_event_active);
 
+	// g_timeout_add(1000, (GSourceFunc) update_events,         calendar_data);
 	g_timeout_add(1000, (GSourceFunc) title_update,          calendar_data);
 	g_timeout_add(1000, (GSourceFunc) active_event_update,   calendar_data);
 	g_timeout_add(1000, (GSourceFunc) pending_events_update, calendar_data);

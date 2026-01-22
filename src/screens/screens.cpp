@@ -86,6 +86,6 @@ GtkWidget* generate_ctrl_screen( GtkWidget* stack, void (*set_screen)(GtkButton*
     
     gtk_table_add(table, 12, 15, 0, 1, button_widget((char*) "term",  exit_handler,   NULL));
     gtk_table_add(table, 12, 15, 4, 5, button_widget((char*) "۶ৎ₊˚⊹⋆ৎ", set_screen,    ctrl_data));
-    
+    gtk_table_add(table, 2, 12, 0, 5, model_init());
     return table;
 }

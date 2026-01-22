@@ -58,6 +58,9 @@ typedef struct TelemetryData {
 	GtkWidget* ip_label;
 } telem_t;
 
+#define MAX_CAL_EVENTS 20
+#define SHOW_CAL_EVENTS 4
+
 typedef struct CalendarEvent {
 	uint id;
 	int64_t start_time;
@@ -131,3 +134,4 @@ GtkWidget* alerts_widget();
 GtkWidget* tasks_widget();
 GtkWidget* label_widget(char* label_content);
 KindleSlider* kindle_slider_new(void (*callback_change)(float), void (*callback_release)(float));
+GtkWidget* model_init();

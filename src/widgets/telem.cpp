@@ -6,7 +6,7 @@
 
 #ifndef DISABLE_TELEM
 
-#define DISABLE_TELEM_DEV 0
+#define DISABLE_TELEM_DEV 1
 #define DISABLE_TELEM_PING 1
 #define DISABLE_TELEM_IP 1
 
@@ -166,7 +166,7 @@ GtkWidget* telem_widget(double update_freq_ms) {
 	GtkWidget* ip_label = gtk_label_new("ip");
 	GtkWidget* ip_value = gtk_label_new("-");
 	data->ip = (char*) malloc(30 * sizeof(char));
-	memset(data->ip, '\0', 30);
+	memset(data->ip, 0, 30);
 	data->ip_label = ip_value;
 	gtk_widget_modify_font(ip_label, font_desc_label);
 	gtk_widget_modify_font(ip_value, font_desc_label);

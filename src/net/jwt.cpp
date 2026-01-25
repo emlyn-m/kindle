@@ -22,7 +22,7 @@ int generate_gcal_jwt(char* service_email, char* privkey, int out_size, char* ou
      
      const char* JWT_TMP_PATH = "/tmp/jwt_header_claim.dat";
      const char* JWT_SIG_PATH = "/tmp/jwt_header_claim.sig";
-     const uint32_t GEN_TOKEN_BUFSIZE = 4096;
+     const uint32_t GEN_TOKEN_BUFSIZE = 8192;
      char* gen_token_buf = (char*) malloc(GEN_TOKEN_BUFSIZE * sizeof(char));
      memset(gen_token_buf, 0, GEN_TOKEN_BUFSIZE);
      snprintf(
@@ -34,8 +34,8 @@ int generate_gcal_jwt(char* service_email, char* privkey, int out_size, char* ou
      );
      
      FILE* tokengen_fp = popen(gen_token_buf, "r");
-     if (!tokengen_fp) { return 1; }  // failed to run command     
+     if (!tokengen_fp) { return 1; }  // failed to run command
      fgets(out, out_size, tokengen_fp);
-     
+          
      return 0;
 }

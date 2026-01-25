@@ -70,9 +70,6 @@ gboolean active_event_update(gpointer* data_p) {
 
 gboolean pending_events_update(gpointer* data_p) {
 	
-   	fflush(stdout);
-
-	
 	calendar_t* data = (calendar_t*) data_p;
 	const auto now = std::chrono::system_clock::now();
     const std::time_t t = std::chrono::system_clock::to_time_t(now);
@@ -106,6 +103,7 @@ gboolean pending_events_update(gpointer* data_p) {
 	PangoFontDescription* font_desc_event_active = pango_font_description_from_string(FONT_BOLD_12);
     
    	char* time_buf = (char*) malloc(128 * sizeof(char));
+    const uint32_t widget_offset = std::max((uint32_t) 0, data->show_events - data->num_events);
 	for (uint32_t i=0; i < std::min(data->show_events, data->num_events); i++) {
 		
 		cal_event_t* event = (data->events)[i+show_offset];
@@ -119,14 +117,14 @@ gboolean pending_events_update(gpointer* data_p) {
          	tm_end.tm_hour % 12, tm_end.tm_min, tm_end.tm_hour < 12 ? (char*) "am" : (char*) "pm"
       	);
 
-		gtk_label_set_text(GTK_LABEL(data->events_time_widgets[i]), time_buf);
-		gtk_label_set_text(GTK_LABEL(data->events_title_widgets[i]), event->title);
+		gtk_label_set_text(GTK_LABEL(data->events_time_widgets[i+widget_offset]), time_buf);
+		gtk_label_set_text(GTK_LABEL(data->events_title_widgets[i+widget_offset]), event->title);
 		if (event == data->active_event) {
-			gtk_widget_modify_font(data->events_time_widgets[i], font_desc_event_active);
-			gtk_widget_modify_font(data->events_title_widgets[i], font_desc_event_active);
+			gtk_widget_modify_font(data->events_time_widgets[i+widget_offset], font_desc_event_active);
+			gtk_widget_modify_font(data->events_title_widgets[i+widget_offset], font_desc_event_active);
 		} else {
-			gtk_widget_modify_font(data->events_time_widgets[i], font_desc_event);
-			gtk_widget_modify_font(data->events_title_widgets[i], font_desc_event);
+			gtk_widget_modify_font(data->events_time_widgets[i+widget_offset], font_desc_event);
+			gtk_widget_modify_font(data->events_title_widgets[i+widget_offset], font_desc_event);
 		}
 	}
 	free(time_buf);
@@ -143,6 +141,7 @@ GtkWidget* calendar_widget() {
 	calendar_data->show_events = SHOW_CAL_EVENTS;
 	calendar_data->num_events = 0;
 	calendar_data->events = (cal_event_t**) malloc(MAX_CAL_EVENTS * sizeof(cal_event_t*));
+	for (int i=0; i < MAX_CAL_EVENTS; i++) { calendar_data->events[i] = NULL; }
 	calendar_data->active_event = NULL;
 	calendar_data->token_buf = NULL;
 	calendar_data->token_exp = 0;
@@ -194,8 +193,8 @@ GtkWidget* calendar_widget() {
 	
 	for (uint32_t i=0; i < calendar_data->show_events; i++) {
 		GtkWidget* event_hbox = gtk_hbox_new(FALSE, 0);
-		calendar_data->events_title_widgets[i] = gtk_label_new("-");
-		calendar_data->events_time_widgets[i] = gtk_label_new("-");
+		calendar_data->events_title_widgets[i] = gtk_label_new("");
+		calendar_data->events_time_widgets[i] = gtk_label_new("");
 		if (( calendar_data->events[i] ) == calendar_data->active_event) {
 			gtk_widget_modify_font(calendar_data->events_title_widgets[i], font_desc_event_active);
 			gtk_widget_modify_font(calendar_data->events_time_widgets[i], font_desc_event_active);
@@ -212,7 +211,7 @@ GtkWidget* calendar_widget() {
 	pango_font_description_free(font_desc_event);
 	pango_font_description_free(font_desc_event_active);
 
-	g_timeout_add(1000, (GSourceFunc) update_events,         calendar_data);
+	g_timeout_add(1000, (GSourceFunc) update_events,         calendar_data);   // todo: find some way to trigger this once immediately, then again every idk however long - should probs store as a field in cal_data (alternatively we should call the callback over and over but return immediately 99/100 times lmao (based on time not rng obv - wow im tired))
 	g_timeout_add(1000, (GSourceFunc) title_update,          calendar_data);
 	g_timeout_add(1000, (GSourceFunc) active_event_update,   calendar_data);
 	g_timeout_add(1000, (GSourceFunc) pending_events_update, calendar_data);

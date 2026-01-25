@@ -63,8 +63,8 @@ typedef struct TelemetryData {
 
 typedef struct CalendarEvent {
 	uint id;
-	int64_t start_time;
-	int64_t end_time;
+	time_t start_time;
+	time_t end_time;
 	char* title;
 } cal_event_t;
 typedef struct CalendarData {

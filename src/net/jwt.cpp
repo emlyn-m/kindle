@@ -8,7 +8,6 @@ int generate_gcal_jwt(char* service_email, char* privkey, int out_size, char* ou
     // claim format: { iss: service_email, scope: https://www.googleapis.com/auth/calendar, aud: https://oauth2.googleapis.com/token, exp: now, iat: now+3600 }
     // todo: move over to using proper library instead of shexec
      
-    const uint32_t HEADER_SIZE = 37;
      const char* header = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9";   // {"alg":"RS256","typ":"JWT"}
      
      const uint32_t CLAIM_SIZE = 1024;

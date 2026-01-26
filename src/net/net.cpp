@@ -49,7 +49,11 @@ int http_get(char* hostname, char* path, int port, char** out) {
         return 1;
     }; 
     (*out)[body_length] = '\0';
+    // safe to bypass warning - we realloc based on buffer size anyway
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wstringop-truncation"
     strncpy(*out, body_offset, body_length);
+    #pragma GCC diagnostic pop
         
     return 0;
 }
@@ -80,7 +84,7 @@ int http_post(char* hostname, char* path, int port, char* content_type, char* bo
         header, header_size, 
         "POST /%s HTTP/1.1\r\nHost: %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n\r\n%s\r\n", 
         path, hostname,
-        content_type, strlen(body),
+        content_type, (long int) strlen(body),
         body
     );
     
@@ -100,7 +104,11 @@ int http_post(char* hostname, char* path, int port, char* content_type, char* bo
         return 1;
     }; 
     (*out)[body_length] = '\0';
+    // safe to bypass warning - we realloc based on buffer size anyway
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wstringop-truncation"
     strncpy(*out, body_offset, body_length);
+    #pragma GCC diagnostic pop
         
     return 0;
 }

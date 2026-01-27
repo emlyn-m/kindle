@@ -13,15 +13,41 @@
 #define     EVENTS_URL "https://www.googleapis.com/calendar/v3/calendars/%s/events?singleEvents=true&orderBy=startTime&maxResults=%d&timeMin=%s&timeMax=%s"
 
 time_t parse_gcal_datetime(cJSON* obj) {
-    struct tm return_time; memset(&return_time, 0, sizeof(struct tm));
+    struct tm return_time; 
+    memset(&return_time, 0, sizeof(struct tm));
     
     if (cJSON_HasObjectItem(obj, "date")) {
+        // todo - fuck surely this doesnt need timezones too...
         strptime(cJSON_GetObjectItem(obj, "date")->valuestring, "%Y-%m-%d", &return_time);
-    } else if (cJSON_HasObjectItem(obj, "datetime")) {
-        strptime(cJSON_GetObjectItem(obj, "dateTime")->valuestring, "%Y-%m-%dT%H:%M:%S", &return_time);
-    } else { return 0; }
+        return_time.tm_isdst = -1;
+        return mktime(&return_time);
+    } 
+    else if (cJSON_HasObjectItem(obj, "dateTime")) {
+        const char* datetime_str = cJSON_GetObjectItem(obj, "dateTime")->valuestring;
+        strptime(datetime_str, "%Y-%m-%dT%H:%M:%S", &return_time);
+        
+        const char* time_part = strchr(datetime_str, 'T');
+        const char* tz_pos = NULL;
+        if (time_part) {
+            tz_pos = strpbrk(time_part, "+-Z");
+        }
+        
+        int tz_offset_seconds = 0;
+        if (tz_pos && (*tz_pos == '+' || *tz_pos == '-')) {
+            int tz_hours = 0, tz_mins = 0;
+            if (sscanf(tz_pos + 1, "%d:%d", &tz_hours, &tz_mins) >= 1) {
+                tz_offset_seconds = (tz_hours * 3600) + (tz_mins * 60);
+                if (*tz_pos == '-') {
+                    tz_offset_seconds = -tz_offset_seconds;
+                }
+            }
+        }
+        
+        time_t result = timegm(&return_time) - tz_offset_seconds;
+        return result;
+    }
     
-    return mktime(&return_time);
+    return 0;
 }
 
 gboolean update_events(gpointer* calendar_gp) {
@@ -133,7 +159,7 @@ gboolean update_events(gpointer* calendar_gp) {
         cal->events[i]->start_time = parse_gcal_datetime(cJSON_GetObjectItem(event_obj, "start"));
         if (!cal->events[i]->start_time) { cal->events[i]->start_time = tlo_t; }  // surely neither of these should happen BUT just in case :)
         
-        cal->events[i]->end_time = parse_gcal_datetime(cJSON_GetObjectItem(event_obj, "end"));
+        cal->events[i]->end_time = parse_gcal_datetime(cJSON_GetObjectItem(event_obj, "end"));  // we need way better logic for handling the 'date' format on this
         if (!cal->events[i]->end_time) { cal->events[i]->end_time = thi_t; }  // surely neither of these should happen BUT just in case :)
     }
     

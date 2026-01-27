@@ -47,7 +47,22 @@ gboolean title_update(gpointer* data_p) {
 }
 
 gboolean active_event_update(gpointer* data_p) {
+    
+    
 	calendar_t* data = (calendar_t*) data_p;
+	
+	time_t most_recent_start = 0;
+	time_t ctime = time(NULL);
+	cal_event_t* active_event = NULL;
+	for (uint i=0; i < data->num_events; i++) {
+		
+	    if ((data->events[i]->start_time < ctime) && (data->events[i]->end_time > ctime) && (data->events[i]->start_time > most_recent_start)) {
+			active_event = data->events[i];
+			most_recent_start = data->events[i]->start_time;
+		}
+	}
+	data->active_event = active_event;
+
 	
 	if (data->active_event == NULL) {  return TRUE;  }
 	

@@ -145,6 +145,8 @@ GtkWidget* calendar_widget() {
 	calendar_data->active_event = NULL;
 	calendar_data->token_buf = NULL;
 	calendar_data->token_exp = 0;
+	calendar_data->update_frequency = 300000;  // 5 minutes
+	calendar_data->last_updated = 0;
 		
 	// wrapper
 	GtkWidget* wrapper = gtk_vbox_new(FALSE, 30*SCALE);
@@ -211,7 +213,7 @@ GtkWidget* calendar_widget() {
 	pango_font_description_free(font_desc_event);
 	pango_font_description_free(font_desc_event_active);
 
-	g_timeout_add(1000, (GSourceFunc) update_events,         calendar_data);   // todo: find some way to trigger this once immediately, then again every idk however long - should probs store as a field in cal_data (alternatively we should call the callback over and over but return immediately 99/100 times lmao (based on time not rng obv - wow im tired))
+	g_timeout_add(30000, (GSourceFunc) update_events,         calendar_data);   // todo: find some way to trigger this once immediately, then again every idk however long - should probs store as a field in cal_data (alternatively we should call the callback over and over but return immediately 99/100 times lmao (based on time not rng obv - wow im tired))
 	g_timeout_add(1000, (GSourceFunc) title_update,          calendar_data);
 	g_timeout_add(1000, (GSourceFunc) active_event_update,   calendar_data);
 	g_timeout_add(1000, (GSourceFunc) pending_events_update, calendar_data);

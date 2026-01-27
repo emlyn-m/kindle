@@ -75,6 +75,8 @@ typedef struct CalendarData {
 	
 	char* token_buf;
 	uint64_t token_exp;
+	time_t last_updated;
+	uint32_t update_frequency;
 	
 	GtkWidget* title_widget;
 	GtkWidget* title_date_widget;

@@ -26,7 +26,7 @@ int generate_gcal_jwt(char* service_email, char* privkey, int out_size, char* ou
      memset(gen_token_buf, 0, GEN_TOKEN_BUFSIZE);
      snprintf(
          gen_token_buf, GEN_TOKEN_BUFSIZE, 
-         "echo -n $(echo -n %s).$(echo -n %s | base64 | tr '+/' '-_' | tr -d '=') | tr -d ' ' > %s && echo -n $'%s' | openssl dgst -sha256 -sign /dev/stdin -out %s %s && echo -n $(cat %s).$(cat %s | base64 -w 0 | tr '+/' '-_' | tr -d '=')", 
+         "echo -n $(echo -n %s).$(echo -n %s | base64 | tr '+/' '-_' | tr -d '=') | tr -d ' ' > %s && echo -n $'%s' | openssl dgst -sha256 -sign /dev/stdin -out %s %s 2>/dev/null && echo -n $(cat %s).$(cat %s | base64 -w 0 | tr '+/' '-_' | tr -d '=')", 
          header, claims, JWT_TMP_PATH,
          privkey, JWT_SIG_PATH, JWT_TMP_PATH,
          JWT_TMP_PATH, JWT_SIG_PATH

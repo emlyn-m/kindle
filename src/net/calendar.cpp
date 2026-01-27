@@ -25,11 +25,22 @@ time_t parse_gcal_datetime(cJSON* obj) {
 }
 
 gboolean update_events(gpointer* calendar_gp) {
-            
+        
     const uint32_t TOKEN_BUFSIZE = 2048;
     calendar_t* cal = (calendar_t*) calendar_gp;
-    unsigned long ctime;
-    if ((ctime = time(NULL)) > cal->token_exp) {
+    unsigned long ctime = time(NULL);
+    
+    if ((cal->last_updated + cal->update_frequency) > ctime) { 
+        return TRUE; 
+    }
+    
+    printf("executing calendar update...\n");
+    fflush(stdout);
+    
+    if (ctime > cal->token_exp) {
+        
+        printf("expired token, regenerating...\n");
+        fflush(stdout);
         
         if (!cal->token_buf) {
             cal->token_buf = (char*) malloc(TOKEN_BUFSIZE * sizeof(char)); 
@@ -38,9 +49,11 @@ gboolean update_events(gpointer* calendar_gp) {
         
         int token_result = generate_gcal_jwt((char*) SERVICE_EMAIL, (char*) PRIVKEY, TOKEN_BUFSIZE, cal->token_buf);
         if (token_result) { 
-            fprintf(stderr, "failed to generate jwt\n");
+            fprintf(stderr, "failed to generate jwt\n"); fflush(stderr);
             return TRUE; 
         } // error!!
+        
+        printf("successfully generated jwt\n"); fflush(stdout);
         
         const uint32_t token_redeem_bufsize = 2048;
         char* token_redeem_payload = (char*) malloc(token_redeem_bufsize * sizeof(char));
@@ -51,9 +64,10 @@ gboolean update_events(gpointer* calendar_gp) {
         );
         FILE* token_redeem_fp = popen(token_redeem_payload, "r");
         if (!token_redeem_fp) { /* failed to exec -  yikes! */ 
-            fprintf(stderr, "failed to exec token redeem");
+            fprintf(stderr, "failed to exec token redeem"); fflush(stderr);
             return TRUE; 
         }
+        printf("redeemed token\n"); fflush(stdout);
         
         const uint32_t token_resp_bufsize = 2048;
         char* token_resp_buf = (char*) malloc(token_resp_bufsize * sizeof(char));
@@ -70,6 +84,8 @@ gboolean update_events(gpointer* calendar_gp) {
         
         // cJSON_free(token_resp_j);  // todo: free - once i work out token sizing
     }
+    
+    printf("valid token found\n"); fflush(stdout);
     
     time_t tlo_t;
     time_t thi_t;
@@ -94,8 +110,11 @@ gboolean update_events(gpointer* calendar_gp) {
     FILE* events_req_fp = popen(events_req_cmdbuf, "r");
     if (!events_req_fp) { fprintf(stderr, "failed to exec events fetch\n"); return TRUE; }
     
+    printf("made events request\n"); fflush(stdout);
+    
     const uint32_t EVENTS_BUF_SIZE = 1000000; // todo: wow i really dont even know if this'll be long enough;
     char events_buf[EVENTS_BUF_SIZE]; 
+    memset(events_buf, 0, EVENTS_BUF_SIZE);
     fread(events_buf, sizeof(char), EVENTS_BUF_SIZE, events_req_fp);
     
     cJSON* event_lst = cJSON_GetObjectItem(cJSON_Parse(events_buf), "items");
@@ -119,6 +138,9 @@ gboolean update_events(gpointer* calendar_gp) {
     }
     
     cal->num_events = cJSON_GetArraySize(event_lst);
+    
+    cal->last_updated = time(NULL);
+    printf("successful update\n"); fflush(stdout);
     
     return TRUE;
    

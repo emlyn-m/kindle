@@ -1,5 +1,6 @@
 #include "glib.h"
 #include "../secrets.h"
+#include "gtk/gtk.h"
 #include "src/net/cJSON.h"
 #include "src/widgets/widgets.hpp"
 #include <cstdio>
@@ -10,14 +11,20 @@
 #define WEATHER_API_CMD "curl -s 'https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&hourly=temperature_2m,precipitation_probability&start_date=%s&end_date=%s&timezone=%s'"
 
 time_t parse_time_offset(char* time_buf) {
-    struct tm date;
+    struct tm date = {0};
     strptime(time_buf, "%Y-%m-%dT%H:%M", &date);
+    date.tm_isdst = -1;
     
     return mktime(&date);
 }
 void generate_date(time_t date_begin, char* res) {
     struct tm* date = localtime(&date_begin);
     strftime(res, 15, (char*) "%Y-%m-%d", date);
+    
+}
+void generate_time(time_t time_d, char* res) {
+    struct tm* time = localtime(&time_d);
+    strftime(res, 10, (char*) "%-I %p", time);
     
 }
 
@@ -64,17 +71,28 @@ gboolean update_weather(gpointer* data) {
     cJSON* weather_times = cJSON_GetObjectItem(hourly, "time");
         
     int time_offset = 0;
-    while ( parse_time_offset(cJSON_GetArrayItem(weather_times, time_offset+1)->valuestring) < ctime ) { time_offset++; }
     
+    
+    while ( parse_time_offset(cJSON_GetArrayItem(weather_times, time_offset+1)->valuestring) < ctime ) { time_offset++; }
     int event_idx = 0;
     while (event_idx < weather_data->num_weather_events) {
         printf("[%d]... ", event_idx);
         
         weather_data->events[event_idx]->time = parse_time_offset(cJSON_GetArrayItem(weather_times, time_offset)->valuestring);
         weather_data->events[event_idx]->temp_c = cJSON_GetArrayItem(temps, time_offset)->valuedouble;
+        
         weather_data->events[event_idx]->rain_prob = cJSON_GetArrayItem(rain_probs, time_offset)->valuedouble;
         
-        printf("t=%ld    T=%lf*C    P=%lf\n", weather_data->events[event_idx]->time, weather_data->events[event_idx]->temp_c, weather_data->events[event_idx]->rain_prob / 100.0);
+        char temp_s[11];
+        snprintf(temp_s, 11, "%.1lf°C", weather_data->events[event_idx]->temp_c);
+        gtk_label_set_text(GTK_LABEL(weather_data->events[event_idx]->widget_temp), temp_s);
+        
+        char time_s[10];
+        generate_time(weather_data->events[event_idx]->time, time_s);
+        gtk_label_set_text(GTK_LABEL(weather_data->events[event_idx]->widget_time), time_s);
+
+        
+        printf("ts=%s    t=%ld    T=%lf*C    P=%lf\n", cJSON_GetArrayItem(weather_times, time_offset)->valuestring, weather_data->events[event_idx]->time, weather_data->events[event_idx]->temp_c, weather_data->events[event_idx]->rain_prob / 100.0);
         
         time_offset++;
         event_idx++;

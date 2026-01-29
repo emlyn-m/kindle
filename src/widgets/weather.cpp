@@ -7,8 +7,7 @@
 
 void generate_time(time_t time_d, char* res) {
     struct tm* time = localtime(&time_d);
-    strftime(res, 10, (char*) "%-I %p", time);
-    
+    strftime(res, 10, (char*) "%-I %p", time);   
 }
 
 
@@ -47,8 +46,8 @@ GtkWidget* weather_widget() {
 
 	for (uint32_t i=0; i < weather->num_weather_events; i++) {
 		GtkWidget* event_vbox = gtk_vbox_new(FALSE, 0);
-		GtkWidget* temp = gtk_label_new("10%");
-		GtkWidget* time = gtk_label_new("8 AM");
+		GtkWidget* temp = gtk_label_new("");
+		GtkWidget* time = gtk_label_new("");
 	
 		gtk_widget_modify_font(temp, font_temp);
 		gtk_widget_modify_font(time, font_time);

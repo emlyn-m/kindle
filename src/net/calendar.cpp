@@ -89,6 +89,7 @@ gboolean update_events(gpointer* calendar_gp) {
             cal->token_buf, JWT_REDEEM_URL
         );
         FILE* token_redeem_fp = popen(token_redeem_payload, "r");
+        free(token_redeem_payload);
         if (!token_redeem_fp) { /* failed to exec -  yikes! */ 
             fprintf(stderr, "failed to exec token redeem"); fflush(stderr);
             return TRUE; 
@@ -101,14 +102,15 @@ gboolean update_events(gpointer* calendar_gp) {
         
         
         cJSON* token_resp_j = cJSON_Parse(token_resp_buf);
+        free(token_resp_buf);
 
         int token_expiry = floor(cJSON_GetObjectItem(token_resp_j, "expires_in")->valuedouble);
         char* token_value = cJSON_GetObjectItem(token_resp_j, "access_token")->valuestring;
         
         cal->token_exp = ctime + token_expiry;
-        cal->token_buf = token_value;
+        strcpy(cal->token_buf, token_value);
         
-        // cJSON_free(token_resp_j);  // todo: free - once i work out token sizing
+        cJSON_free(token_resp_j);  // todo: free - once i work out token sizing
     }
     
     printf("valid token found\n"); fflush(stdout);

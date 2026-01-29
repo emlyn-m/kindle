@@ -91,11 +91,17 @@ typedef struct CalendarData {
 } calendar_t;
 
 typedef struct WeatherEvent {
-	uint64_t time;
+	time_t time;
+	double rain_prob;
+	double temp_c;
+	struct WeatherEvent* next;
 } weather_ev_t;
 typedef struct WeatherData {
 	uint32_t num_weather_events;
-	weather_ev_t* events;
+	weather_ev_t** events;
+	
+	time_t last_update;
+	time_t update_freq;
 } weather_t;
 
 typedef struct AlertEvent {

@@ -1,4 +1,6 @@
 #include "./widgets.hpp"
+#include "../net/net.hpp"
+
 #include "gtk/gtk.h"
 #include <cstdlib>
 #include <cstring>
@@ -7,6 +9,12 @@ GtkWidget* weather_widget() {
 	
 	weather_t* weather = (weather_t*) malloc(sizeof(weather_t));
 	weather->num_weather_events = 10;
+	weather->last_update = 0;
+	weather->update_freq = 30000; // ms
+	weather->events = (weather_ev_t**) malloc(weather->num_weather_events * sizeof(weather_ev_t*));
+	for (int i=0; i < weather->num_weather_events; i++) {
+	    weather->events[i] = (weather_ev_t*) malloc(sizeof(weather_ev_t));
+	}
 	
 	// wrapper
 	GtkWidget* wrapper = gtk_hbox_new(FALSE, 30*SCALE);
@@ -32,6 +40,8 @@ GtkWidget* weather_widget() {
 
 	pango_font_description_free(font_chance);
 	pango_font_description_free(font_time);
+	
+	g_timeout_add(1000, (GSourceFunc) update_weather, weather);
 
 	return wrapper;
 }

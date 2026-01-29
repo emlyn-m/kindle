@@ -8,3 +8,5 @@ int http_post(char* hostname, char* path, int port, char* content_type, char* bo
 gboolean update_events(gpointer*);
 int generate_gcal_jwt(char* service_email, char* privkey, int out_size, char* out);
 time_t parse_gcal_datetime(cJSON* obj);
+
+gboolean update_weather(gpointer* data);

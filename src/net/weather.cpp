@@ -22,11 +22,6 @@ void generate_date(time_t date_begin, char* res) {
     strftime(res, 15, (char*) "%Y-%m-%d", date);
     
 }
-void generate_time(time_t time_d, char* res) {
-    struct tm* time = localtime(&time_d);
-    strftime(res, 10, (char*) "%-I %p", time);
-    
-}
 
 gboolean update_weather(gpointer* data) {
     
@@ -82,15 +77,6 @@ gboolean update_weather(gpointer* data) {
         weather_data->events[event_idx]->temp_c = cJSON_GetArrayItem(temps, time_offset)->valuedouble;
         
         weather_data->events[event_idx]->rain_prob = cJSON_GetArrayItem(rain_probs, time_offset)->valuedouble;
-        
-        char temp_s[11];
-        snprintf(temp_s, 11, "%.1lf°C", weather_data->events[event_idx]->temp_c);
-        gtk_label_set_text(GTK_LABEL(weather_data->events[event_idx]->widget_temp), temp_s);
-        
-        char time_s[10];
-        generate_time(weather_data->events[event_idx]->time, time_s);
-        gtk_label_set_text(GTK_LABEL(weather_data->events[event_idx]->widget_time), time_s);
-
         
         printf("ts=%s    t=%ld    T=%lf*C    P=%lf\n", cJSON_GetArrayItem(weather_times, time_offset)->valuestring, weather_data->events[event_idx]->time, weather_data->events[event_idx]->temp_c, weather_data->events[event_idx]->rain_prob / 100.0);
         

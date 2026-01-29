@@ -5,12 +5,35 @@
 #include <cstdlib>
 #include <cstring>
 
+void generate_time(time_t time_d, char* res) {
+    struct tm* time = localtime(&time_d);
+    strftime(res, 10, (char*) "%-I %p", time);
+    
+}
+
+
+gboolean update_weather_display(gpointer* weather_vp) {
+    weather_t* weather_data = (weather_t*) weather_vp;
+    
+    for (int event_idx=0; event_idx < weather_data->num_weather_events; event_idx++) { 
+        char temp_s[11];
+        snprintf(temp_s, 11, "%.1lf°C", weather_data->events[event_idx]->temp_c);
+        gtk_label_set_text(GTK_LABEL(weather_data->events[event_idx]->widget_temp), temp_s);
+    
+        char time_s[10];
+        generate_time(weather_data->events[event_idx]->time, time_s);
+        gtk_label_set_text(GTK_LABEL(weather_data->events[event_idx]->widget_time), time_s);
+    }
+    
+    return TRUE;
+}
+
 GtkWidget* weather_widget() {
 	
 	weather_t* weather = (weather_t*) malloc(sizeof(weather_t));
 	weather->num_weather_events = 10;
 	weather->last_update = 0;
-	weather->update_freq = 30000; // ms
+	weather->update_freq = 30 * 60 * 1000; // ms
 	weather->events = (weather_ev_t**) malloc(weather->num_weather_events * sizeof(weather_ev_t*));
 	for (int i=0; i < weather->num_weather_events; i++) {
 	    weather->events[i] = (weather_ev_t*) malloc(sizeof(weather_ev_t));
@@ -45,6 +68,7 @@ GtkWidget* weather_widget() {
 	pango_font_description_free(font_time);
 	
 	g_timeout_add(1000, (GSourceFunc) update_weather, weather);
+	g_timeout_add(1000, (GSourceFunc) update_weather_display, weather);
 
 	return wrapper;
 }

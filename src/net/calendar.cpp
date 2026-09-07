@@ -97,18 +97,55 @@ bool ensure_token(std::string &token, time_t &token_exp) {
   return true;
 }
 
-bool fetch_events(const std::string &token, std::vector<CalEvent> &out) {
-  time_t lo_t = time(nullptr);
-  time_t hi_t = lo_t + 7 * 86400;
-  struct tm lo = *gmtime(&lo_t);
-  struct tm hi = *gmtime(&hi_t);
-  char ts_lo[64], ts_hi[64];
-  strftime(ts_lo, sizeof ts_lo, "%Y-%m-%dT00:00:00Z", &lo);
-  strftime(ts_hi, sizeof ts_hi, "%Y-%m-%dT00:00:00Z", &hi);
+// Query internal - use both RFC dates and raw time_t
+struct Window {
+  char ts_lo[64];
+  char ts_hi[64];
+  time_t lo_t;
+  time_t hi_t;
+};
+
+// Week ahead
+Window agenda_window() {
+  Window w;
+  w.lo_t = time(nullptr);
+  w.hi_t = w.lo_t + 7 * 86400;
+  struct tm lo = *gmtime(&w.lo_t);
+  struct tm hi = *gmtime(&w.hi_t);
+  strftime(w.ts_lo, sizeof w.ts_lo, "%Y-%m-%dT00:00:00Z", &lo);
+  strftime(w.ts_hi, sizeof w.ts_hi, "%Y-%m-%dT00:00:00Z", &hi);
+  return w;
+}
+
+// today (local time only)
+Window today_window() {
+  Window w;
+  time_t now = time(nullptr);
+  struct tm d = *localtime(&now);
+  d.tm_hour = d.tm_min = d.tm_sec = 0;
+  d.tm_isdst = -1;
+  w.lo_t = mktime(&d);
+  d.tm_mday += 1;
+  d.tm_isdst = -1;
+  w.hi_t = mktime(&d);
+
+  struct tm lo = *gmtime(&w.lo_t);
+  struct tm hi = *gmtime(&w.hi_t);
+  strftime(w.ts_lo, sizeof w.ts_lo, "%Y-%m-%dT%H:%M:%SZ", &lo);
+  strftime(w.ts_hi, sizeof w.ts_hi, "%Y-%m-%dT%H:%M:%SZ", &hi);
+  return w;
+}
+
+bool fetch_events(const std::string &token, const char *cal_id,
+                  const Window &win, std::vector<CalEvent> &out) {
+  if (!cal_id || !*cal_id) {
+    LOG(PRI_WRN, "calendar: no calendar id configured\n");
+    return false;
+  }
 
   char url[512];
-  snprintf(url, sizeof url, get_attr_str("GOOGLE_EVENTS_URL"),
-           get_attr_str("GOOGLE_CALENDAR_ID"), MAX_CAL_EVENTS, ts_lo, ts_hi);
+  snprintf(url, sizeof url, get_attr_str("GOOGLE_EVENTS_URL"), cal_id,
+           MAX_CAL_EVENTS, win.ts_lo, win.ts_hi);
 
   char cmd[2048];
   snprintf(cmd, sizeof cmd, "curl -sH 'Authorization: Bearer %s' '%s'",
@@ -144,14 +181,16 @@ bool fetch_events(const std::string &token, std::vector<CalEvent> &out) {
       LOG(PRI_WRN, "calendar: event missing summary, skipping\n");
       continue;
     }
+    cJSON *id = cJSON_GetObjectItem(obj, "id");
     time_t start = parse_gcal_datetime(cJSON_GetObjectItem(obj, "start"));
     time_t end = parse_gcal_datetime(cJSON_GetObjectItem(obj, "end"));
-    out.push_back(
-        CalEvent{summary->valuestring, start ? start : lo_t, end ? end : hi_t});
+
+    out.push_back(CalEvent{id ? id->valuestring : "", summary->valuestring,
+                           start ? start : win.lo_t, end ? end : win.hi_t});
   }
 
   cJSON_Delete(root);
-  LOG(PRI_INF, "calendar: %zu events\n", out.size());
+  LOG(PRI_INF, "calendar: %zu events from %s\n", out.size(), cal_id);
   return true;
 }
 
@@ -163,11 +202,26 @@ void calendar_worker(std::function<void()> on_update) {
   std::string token;
   time_t token_exp = 0;
 
+  const char *todo_id = get_attr_str("GOOGLE_TODO_CALENDAR_ID");
+
   for (;;) {
-    std::vector<CalEvent> parsed;
-    if (ensure_token(token, token_exp) && fetch_events(token, parsed)) {
-      post_to_main([parsed = std::move(parsed), on_update]() mutable {
-        g_calendar.events = std::move(parsed);
+    std::vector<CalEvent> events, todos;
+    bool got_events = false, got_todos = false;
+
+    if (ensure_token(token, token_exp)) {
+      got_events = fetch_events(token, get_attr_str("GOOGLE_CALENDAR_ID"),
+                                agenda_window(), events);
+      if (todo_id && *todo_id)
+        got_todos = fetch_events(token, todo_id, today_window(), todos);
+    }
+
+    if (got_events || got_todos) {
+      post_to_main([events = std::move(events), todos = std::move(todos),
+                    got_events, got_todos, on_update]() mutable {
+        if (got_events)
+          g_calendar.events = std::move(events);
+        if (got_todos)
+          g_calendar.todos = std::move(todos);
         g_calendar.last_update = time(nullptr);
         if (on_update)
           on_update();

@@ -13,12 +13,12 @@ constexpr int SCREEN_H = 1080;
 // neutral grey used for placeholders.
 constexpr unsigned BLACK = 0x000000;
 constexpr unsigned WHITE = 0xFFFFFF;
-constexpr unsigned GREY = 0xD9D9D9;   // placeholder / disabled fill / hairlines
-constexpr unsigned MUTED = 0x888888;  // secondary text (times, captions)
-constexpr unsigned DOT = 0xCBCBCB;    // dotted-grid background
+constexpr unsigned GREY = 0xD9D9D9;
+constexpr unsigned MUTED = 0x888888;
+constexpr unsigned DOT = 0xCBCBCB;
 constexpr unsigned DEBUG_RED = 0xFF0000;
 
-// Geist Mono is installed system-wide; faces are selected by weight.
+// Font must be installed system wide
 constexpr const char *FONT_FAMILY = "Geist Mono";
 
 // Set the cairo source to an 0xRRGGBB colour.
@@ -34,9 +34,10 @@ void draw_text(cairo_t *cr, double rx, double ry, double rw, double rh,
 void draw_text_tl(cairo_t *cr, double x, double y, unsigned hex,
                   const char *text, double px, PangoWeight weight);
 
-// Render every font (weight, size) the UI uses to a throwaway surface, so the
-// one-time fontconfig/FreeType/Pango glyph-caching cost is paid at launch
-// rather than on the first screen that uses each combo. Call once at startup.
+// Measure `text` for callback sizing
+double text_width(cairo_t *cr, const char *text, double px, PangoWeight weight);
+
+// Render all fonts to throwaway surface to avoid lag on navigate
 void prewarm_fonts();
 
-}  // namespace ui
+} // namespace ui

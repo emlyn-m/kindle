@@ -118,10 +118,15 @@ GtkWidget *build_main_screen() {
   put(fixed, telem, 1065, 293);
   telem_start([telem] { gtk_widget_queue_draw(telem); });
 
-  // Calendar
   GtkWidget *calendar = make_calendar_surface(345, 354);
+  GtkWidget *todo = make_todo_surface(345, 353);
   put(fixed, calendar, 336, 293);
-  calendar_start([calendar] { gtk_widget_queue_draw(calendar); });
+  put(fixed, todo, 690, 294);
+
+  calendar_start([calendar, todo] {
+    gtk_widget_queue_draw(calendar);
+    gtk_widget_queue_draw(todo);
+  });
 
   // Alerts
   GtkWidget *alerts = make_alerts_surface(345, 353);
@@ -129,7 +134,6 @@ GtkWidget *build_main_screen() {
   alerts_start([alerts] { gtk_widget_queue_draw(alerts); });
 
   // Sketches
-  put(fixed, make_image_surface(345, 353), 690, 294);
   put(fixed, make_image_surface(345, 354), 336, 677);
 
   static LedButton strip_btn{0, "led.strip0"};

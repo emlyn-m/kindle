@@ -43,21 +43,25 @@ void draw_text_tl(cairo_t *cr, double x, double y, unsigned hex,
   g_object_unref(layout);
 }
 
+double text_width(cairo_t *cr, const char *text, double px,
+                  PangoWeight weight) {
+  PangoLayout *layout = make_layout(cr, text, px, weight);
+  int tw, th;
+  pango_layout_get_pixel_size(layout, &tw, &th);
+  g_object_unref(layout);
+  return tw;
+}
+
 void prewarm_fonts() {
-  // (weight, px) combos used across the screens. Keep in sync when new sizes
-  // are introduced — a missing one just costs a one-time hitch on first use.
   struct Combo {
     PangoWeight weight;
     double px;
   };
   static const Combo combos[] = {
-      {PANGO_WEIGHT_BOLD, 90},    // clock
-      {PANGO_WEIGHT_MEDIUM, 10},  // device / shell buttons
-      {PANGO_WEIGHT_BOLD, 30},    // weather header
-      {PANGO_WEIGHT_NORMAL, 20},  // weather day
-      {PANGO_WEIGHT_NORMAL, 16},  // weather temp
-      {PANGO_WEIGHT_BOLD, 48},    // modal title
-      {PANGO_WEIGHT_MEDIUM, 16},  // modal conn / exit
+      {PANGO_WEIGHT_BOLD, 90},   {PANGO_WEIGHT_MEDIUM, 10},
+      {PANGO_WEIGHT_BOLD, 30},   {PANGO_WEIGHT_NORMAL, 20},
+      {PANGO_WEIGHT_NORMAL, 16}, {PANGO_WEIGHT_BOLD, 48},
+      {PANGO_WEIGHT_MEDIUM, 16},
   };
 
   cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_A8, 8, 8);
@@ -68,4 +72,4 @@ void prewarm_fonts() {
   cairo_surface_destroy(surface);
 }
 
-}  // namespace ui
+} // namespace ui

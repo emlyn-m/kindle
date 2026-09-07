@@ -56,6 +56,9 @@ GtkWidget *make_alerts_surface(int w, int h);
 // --- calendar---------------------------------------------------------------
 GtkWidget *make_calendar_surface(int w, int h);
 
+// --- todo ------------------------------------------------------------------
+GtkWidget *make_todo_surface(int w, int h);
+
 // --- image -----------------------------------------------------------------
 GtkWidget *make_image_surface(int w, int h);
 
